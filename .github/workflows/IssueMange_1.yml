@@ -37,15 +37,16 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Update docs/index.md file
+    - name: Fetch issue data
       if: github.event.action == 'closed'
       run: |
         ISSUE_NUMBER=${{ github.event.issue.number }}
-        ICON_LINK=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=图标链接（服务器图标）：\*\*\K[^\*]+')
-        SERVER_TITLE=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=服务器标题：\*\*\K[^\*]+')
-        SERVER_VERSION=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=服务器版本（如：Java 1.21/Bedrock 1.21）：\*\*\K[^\*]+')
-        WEBSITE_QQ_LINK=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=官网/QQ 群链接：\*\*\K[^\*]+')
-        LINK_TITLE=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=链接标题：\*\*\K[^\*]+')
+        ISSUE_DATA=$(gh issue view $ISSUE_NUMBER --json body -q .body)
+        ICON_LINK=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=图标链接（服务器图标）：\\*\\*\\K[^\\*]+").string')
+        SERVER_TITLE=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=服务器标题：\\*\\*\\K[^\\*]+").string')
+        SERVER_VERSION=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=服务器版本（如：Java 1.21/Bedrock 1.21）：\\*\\*\\K[^\\*]+").string')
+        WEBSITE_QQ_LINK=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=官网/QQ 群链接：\\*\\*\\K[^\\*]+").string')
+        LINK_TITLE=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=链接标题：\\*\\*\\K[^\\*]+").string')
 
         echo -e "\n\n  - icon:\n      src: $ICON_LINK\n    title: $SERVER_TITLE\n    details: 版本：$SERVER_VERSION | $SERVER_TITLE</br>example描述\n    link: $WEBSITE_QQ_LINK\n    linkText: $LINK_TITLE" >> docs/index.md
         sed -i '302s/$/\n/' docs/index.md
