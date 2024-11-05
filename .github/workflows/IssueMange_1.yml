@@ -39,6 +39,8 @@ jobs:
 
     - name: Fetch issue data
       if: github.event.action == 'closed'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         ISSUE_NUMBER=${{ github.event.issue.number }}
         ISSUE_DATA=$(gh issue view $ISSUE_NUMBER --json body -q .body)
