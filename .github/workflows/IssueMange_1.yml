@@ -20,7 +20,7 @@ jobs:
         gh label create "等待审核" --color FFFFFF --description "等待管理员审核"
         gh label create "通过审核" --color 00FF00 --description "管理员通过审核"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
     - name: Add "等待审核" label
@@ -28,14 +28,14 @@ jobs:
       run: |
         gh issue edit ${{ github.event.issue.number }} --add-label "等待审核"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Remove "等待审核" label and add "通过审核"
       if: github.event.action == 'closed'
       run: |
         gh issue edit ${{ github.event.issue.number }} --remove-label "等待审核" --add-label "通过审核"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Fetch issue data
       if: github.event.action == 'closed'
@@ -60,4 +60,4 @@ jobs:
         git commit -m "Update server list for issue #${ISSUE_NUMBER}"
         git push
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
