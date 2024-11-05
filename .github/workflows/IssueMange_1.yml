@@ -11,6 +11,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
+    - name: Ensure labels exist
+      run: |
+        gh label create "等待审核" --color FFFFFF --description "等待管理员审核"
+        gh label create "通过审核" --color 00FF00 --description "管理员通过审核"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      continue-on-error: true
+
     - name: Add "等待审核" label
       if: github.event.action == 'opened'
       run: |
