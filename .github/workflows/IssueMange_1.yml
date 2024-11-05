@@ -16,52 +16,49 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Ensure labels exist
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh label create "等待审核" --color FFFFFF --description "等待管理员审核"
-        gh label create "通过审核" --color 00FF00 --description "管理员通过审核"
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"name": "等待审核", "color": "FFFFFF", "description": "等待管理员审核"}' \
+          https://api.github.com/repos/${{ github.repository }}/labels
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"name": "通过审核", "color": "00FF00", "description": "管理员通过审核"}' \
+          https://api.github.com/repos/${{ github.repository }}/labels
       continue-on-error: true
 
     - name: Add "等待审核" label
       if: github.event.action == 'opened'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh issue edit ${{ github.event.issue.number }} --add-label "等待审核"
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"labels": ["等待审核"]}' \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
 
     - name: Remove "等待审核" label and add "通过审核"
       if: github.event.action == 'closed'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        gh issue edit ${{ github.event.issue.number }} --remove-label "等待审核" --add-label "通过审核"
+        curl -X DELETE -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}/labels/等待审核
+        curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          -d '{"labels": ["通过审核"]}' \
+          https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.issue.number }}
 
     - name: Fetch issue data
       if: github.event.action == 'closed'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         ISSUE_NUMBER=${{ github.event.issue.number }}
-        ISSUE_DATA=$(gh issue view $ISSUE_NUMBER --json body -q .body)
-        ICON_LINK=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=图标链接（服务器图标）：\\*\\*\\K[^\\*]+").string')
-        SERVER_TITLE=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=服务器标题：\\*\\*\\K[^\\*]+").string')
-        SERVER_VERSION=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=服务器版本（如：Java 1.21/Bedrock 1.21）：\\*\\*\\K[^\\*]+").string')
-        WEBSITE_QQ_LINK=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=官网/QQ 群链接：\\*\\*\\K[^\\*]+").string')
-        LINK_TITLE=$(echo "$ISSUE_DATA" | jq -r 'match("(?<=链接标题：\\*\\*\\K[^\\*]+").string')
+        ISSUE_DATA=$(curl -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          https://api.github.com/repos/${{ github.repository }}/issues/$ISSUE_NUMBER \
+          | jq -r .body)
+        ICON_LINK=$(echo "$ISSUE_DATA" | grep -oP '(?<=图标链接（服务器图标）：\*\*\K[^\*]+')
+        SERVER_TITLE=$(echo "$ISSUE_DATA" | grep -oP '(?<=服务器标题：\*\*\K[^\*]+')
+        SERVER_VERSION=$(echo "$ISSUE_DATA" | grep -oP '(?<=服务器版本（如：Java 1.21/Bedrock 1.21）：\*\*\K[^\*]+')
+        WEBSITE_QQ_LINK=$(echo "$ISSUE_DATA" | grep -oP '(?<=官网/QQ 群链接：\*\*\K[^\*]+')
+        LINK_TITLE=$(echo "$ISSUE_DATA" | grep -oP '(?<=链接标题：\*\*\K[^\*]+')
 
         echo -e "\n\n  - icon:\n      src: $ICON_LINK\n    title: $SERVER_TITLE\n    details: 版本：$SERVER_VERSION | $SERVER_TITLE</br>example描述\n    link: $WEBSITE_QQ_LINK\n    linkText: $LINK_TITLE" >> docs/index.md
         sed -i '302s/$/\n/' docs/index.md
 
     - name: Commit changes
       if: github.event.action == 'closed'
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
