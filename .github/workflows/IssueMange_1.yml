@@ -16,31 +16,35 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Ensure labels exist
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         gh label create "等待审核" --color FFFFFF --description "等待管理员审核"
         gh label create "通过审核" --color 00FF00 --description "管理员通过审核"
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       continue-on-error: true
 
     - name: Add "等待审核" label
       if: github.event.action == 'opened'
-      run: |
-        gh issue edit ${{ github.event.issue.number }} --add-label "等待审核"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh issue edit ${{ github.event.issue.number }} --add-label "等待审核"
 
     - name: Remove "等待审核" label and add "通过审核"
       if: github.event.action == 'closed'
-      run: |
-        gh issue edit ${{ github.event.issue.number }} --remove-label "等待审核" --add-label "通过审核"
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh issue edit ${{ github.event.issue.number }} --remove-label "等待审核" --add-label "通过审核"
 
     - name: Fetch issue data
       if: github.event.action == 'closed'
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         ISSUE_NUMBER=${{ github.event.issue.number }}
         ISSUE_DATA=$(gh issue view $ISSUE_NUMBER --json body -q .body)
@@ -55,11 +59,12 @@ jobs:
 
     - name: Commit changes
       if: github.event.action == 'closed'
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --global user.name 'github-actions'
         git config --global user.email 'github-actions@github.com'
         git add docs/index.md
         git commit -m "Update server list for issue #${ISSUE_NUMBER}"
         git push
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
