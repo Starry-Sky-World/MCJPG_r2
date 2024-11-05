@@ -11,18 +11,17 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Add or update label
+    - name: Add "等待审核" label
       if: github.event.action == 'opened'
       run: |
-        gh issue add-label ${{ github.event.issue.number }} --label "等待审核"
+        gh issue edit ${{ github.event.issue.number }} --add-label "等待审核"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Remove label and add "通过审核"
+    - name: Remove "等待审核" label and add "通过审核"
       if: github.event.action == 'closed'
       run: |
-        gh issue remove-label ${{ github.event.issue.number }} --label "等待审核"
-        gh issue add-label ${{ github.event.issue.number }} --label "通过审核"
+        gh issue edit ${{ github.event.issue.number }} --remove-label "等待审核" --add-label "通过审核"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
