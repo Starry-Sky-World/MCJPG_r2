@@ -1,0 +1,59 @@
+name: Process Server List Issue
+on:
+  issues:
+    types: [opened, closed]
+
+jobs:
+  process_issue:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Add or update label
+      if: github.event.action == 'opened'
+      run: |
+        gh issue add-label ${{ github.event.issue.number }} --label "等待审核"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Remove label and add "通过审核"
+      if: github.event.action == 'closed'
+      run: |
+        gh issue remove-label ${{ github.event.issue.number }} --label "等待审核"
+        gh issue add-label ${{ github.event.issue.number }} --label "通过审核"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update docs/index.md file
+      if: github.event.action == 'closed'
+      run: |
+        ISSUE_NUMBER=${{ github.event.issue.number }}
+        ICON_LINK=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=图标链接（服务器图标）：\*\*\K[^\*]+')
+        SERVER_TITLE=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=服务器标题：\*\*\K[^\*]+')
+        SERVER_VERSION=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=服务器版本（如：Java 1.21/Bedrock 1.21）：\*\*\K[^\*]+')
+        WEBSITE_QQ_LINK=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=官网/QQ 群链接：\*\*\K[^\*]+')
+        LINK_TITLE=$(jq -r '.body' <<< "${{ github.event.issue.body }}" | grep -oP '(?<=链接标题：\*\*\K[^\*]+')
+
+        echo -e "\n\n  - icon:\n      src: $ICON_LINK\n    title: $SERVER_TITLE\n    details: 版本：$SERVER_VERSION | $SERVER_TITLE</br>example描述\n    link: $WEBSITE_QQ_LINK\n    linkText: $LINK_TITLE" >> docs/index.md
+        sed -i '302s/$/\n/' docs/index.md
+
+    - name: Commit changes
+      if: github.event.action == 'closed'
+      run: |
+        git config --global user.name 'github-actions'
+        git config --global user.email 'github-actions@github.com'
+        git add docs/index.md
+        git commit -m "Update server list for issue #${ISSUE_NUMBER}"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
