@@ -1,0 +1,45 @@
+name: 申请加入服务器列表
+description: 提交你的服务器信息以加入服务器列表
+title: "[申请加入服务器列表] "
+labels: ["服务器申请"]
+
+body:
+  - type: input
+    id: icon_link
+    attributes:
+      label: 图标链接（服务器图标）
+      description: 在这里插入图标链接
+    validations:
+      required: true
+
+  - type: input
+    id: server_title
+    attributes:
+      label: 服务器标题
+      description: 在这里填写服务器标题
+    validations:
+      required: true
+
+  - type: input
+    id: server_version
+    attributes:
+      label: 服务器版本（如：Java 1.21/Bedrock 1.21）
+      description: 在这里填写服务器版本
+    validations:
+      required: true
+
+  - type: input
+    id: website_or_qq_link
+    attributes:
+      label: 官网/QQ 群链接
+      description: 在这里插入官网或 QQ 群链接
+    validations:
+      required: true
+
+  - type: input
+    id: link_title
+    attributes:
+      label: 链接标题
+      description: 在这里填写链接标题
+    validations:
+      required: true
